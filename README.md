@@ -11,3 +11,7 @@ podman run -d \
   -e POSTGRES_PASSWORD=secret \
   -e POSTGRES_DB=vectordb \
   pgvector/pgvector:pg17
+
+## German Optimizations
+
+This project is preconfigured to work well with German documents. It uses a German embedding model (`jina-embeddings-v2-base-de`) and the prompts are written in German. Page numbers like `Seite 1` and common footnote patterns are removed during preprocessing. Hyphenation across line breaks is also fixed to improve chunk quality.

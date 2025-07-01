@@ -19,8 +19,8 @@ public class DocumentPreprocessor {
     private static final Pattern EXCESSIVE_WHITESPACE = Pattern.compile("\\s{3,}");
     private static final Pattern MULTIPLE_NEWLINES = Pattern.compile("\n{3,}");
     private static final Pattern MARKDOWN_LINKS = Pattern.compile("\\[([^\\]]+)\\]\\([^\\)]+\\)");
-    private static final Pattern PAGE_REFERENCES = Pattern.compile("(?i)(page\\s+\\d+|\\d+\\s*$)");
-    private static final Pattern FOOTNOTE_REFS = Pattern.compile("\\[\\d+\\]");
+    private static final Pattern PAGE_REFERENCES = Pattern.compile("(?i)((page|seite|s\\.)\\s*\\d+|\\d+\\s*$)");
+    private static final Pattern FOOTNOTE_REFS = Pattern.compile("(\\[\\d+\\]|\\(\\d+\\))");
 
 
     public List<Document> preprocessDocuments(List<Document> documents) {
@@ -75,7 +75,10 @@ public class DocumentPreprocessor {
         cleaned = EXCESSIVE_WHITESPACE.matcher(cleaned).replaceAll(" ");
         cleaned = MULTIPLE_NEWLINES.matcher(cleaned).replaceAll("\n\n");
 
-        // Step 7: Process line by line to remove empty lines
+        // Step 7: Fix hyphenated line breaks common in German PDFs
+        cleaned = removeHyphenation(cleaned);
+
+        // Step 8: Process line by line to remove empty lines
         cleaned = cleaned.lines()
                 .map(String::trim)
                 .filter(line -> !line.isEmpty())
@@ -135,6 +138,13 @@ public class DocumentPreprocessor {
         }
 
         return content.toString().trim();
+    }
+
+    /**
+     * Remove hyphenation at line breaks (e.g. "Ent-\nwicklung" -> "Entwicklung")
+     */
+    private String removeHyphenation(String text) {
+        return text.replaceAll("-\\n(?=\\p{L})", "");
     }
 
     /**

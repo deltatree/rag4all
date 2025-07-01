@@ -86,7 +86,7 @@ public class ChatController {
 
     private boolean isGreeting(String text) {
         String lowerText = text.toLowerCase().trim();
-        return lowerText.matches("^(hi|hello|hey|good morning|good afternoon|good evening|how are you|what's up|greetings).*");
+        return lowerText.matches("^(hi|hello|hey|good morning|good afternoon|good evening|how are you|what's up|greetings|hallo|guten morgen|guten tag|guten abend|servus|moin|gr\u00fc\u00df gott).*");
     }
 
     private boolean isGeneralKnowledgeQuestion(String question, List<Document> documents) {
@@ -100,7 +100,13 @@ public class ChatController {
                 "how far is", "what time is it", "what's the weather",
                 "who is the president", "who is the ceo of.*(?!.*" + getDocumentTopics(documents) + ")",
                 "what year did", "how old is", "what color is",
-                "recipe for", "how to cook", "lyrics to"
+                "recipe for", "how to cook", "lyrics to",
+                // German equivalents
+                "wie hoch ist", "wann wurde.*geboren", "wann ist.*gestorben",
+                "wer hat.*erfunden", "was ist die hauptstadt von",
+                "wie weit ist", "wie ist das wetter", "wer ist der pr.sident",
+                "wer ist der ceo von.*(?!.*" + getDocumentTopics(documents) + ")",
+                "in welchem jahr", "wie alt ist"
         };
 
         for (String pattern : generalPatterns) {
@@ -149,32 +155,32 @@ public class ChatController {
 
     private String createImprovedPrompt(String context, String question) {
         return String.format("""
-            You are a helpful AI assistant that ONLY answers questions based on the provided document context. You must not use any external knowledge or general information.
+            Du bist ein hilfsbereiter KI-Assistent und beantwortest Fragen ausschließlich auf Basis des folgenden Dokumentenkontexts. Externes Wissen darfst du nicht verwenden.
 
-            **CRITICAL INSTRUCTIONS:**
-            1. **ONLY use the provided context**: Answer ONLY based on information explicitly found in the context below
-            2. **No external knowledge**: Do NOT answer questions about general topics, current events, or information not in the context
-            3. **Be strict**: If the answer is not in the context, you MUST say "I don't have information about that in my knowledge base"
-            4. **Cite sources**: When you do find relevant information, mention which document it came from
-            5. **Be helpful when context exists**: If the context contains relevant information, provide a detailed answer
+            **WICHTIGE REGELN:**
+            1. **Nur der bereitgestellte Kontext**: Antworte nur mit Informationen, die im Kontext unten vorkommen.
+            2. **Kein externes Wissen**: Beantworte keine allgemeinen Themen oder Aktuelles außerhalb des Kontexts.
+            3. **Sei strikt**: Falls die Antwort nicht im Kontext steht, sage "Dazu habe ich keine Informationen in meiner Wissensbasis."
+            4. **Quellen nennen**: Wenn du passende Informationen findest, gib an, aus welchem Dokument sie stammen.
+            5. **Hilfreich bleiben**: Enthält der Kontext relevante Informationen, liefere eine ausführliche Antwort.
 
-            **RESPONSE RULES:**
-            - If the context contains relevant information: Provide a comprehensive, detailed response with source citations
-            - If the context partially answers the question: Answer only what the context supports and indicate what's missing
-            - If the context is not relevant or doesn't contain the answer: Respond with "I don't have information about that in my knowledge base. Please ask questions related to the uploaded documents."
+            **ANTWORTREGELN:**
+            - Enthält der Kontext relevante Informationen, gib eine umfassende Antwort mit Quellenangaben.
+            - Deckt der Kontext die Frage nur teilweise ab, beantworte nur, was enthalten ist, und verweise auf fehlende Informationen.
+            - Ist kein passender Kontext vorhanden, antworte: "Dazu habe ich keine Informationen in meiner Wissensbasis. Bitte stelle Fragen zu den hochgeladenen Dokumenten."
 
-            **EXAMPLES OF WHAT NOT TO ANSWER:**
-            - General knowledge questions (height of mountains, historical dates not in documents, etc.)
-            - Current events not mentioned in the documents
-            - Mathematical calculations not related to document content
-            - Personal advice or opinions
+            **BEISPIELE, WAS NICHT BEANTWORTET WIRD:**
+            - Allgemeinwissen (z.B. Höhe von Bergen, historische Daten, sofern nicht im Dokument enthalten)
+            - Aktuelle Ereignisse, die nicht im Dokument stehen
+            - Mathematische Berechnungen ohne Bezug zum Dokument
+            - Persönliche Ratschläge oder Meinungen
 
-            **CONTEXT FROM DOCUMENTS:**
+            **KONTEXT AUS DEN DOKUMENTEN:**
             %s
 
-            **USER QUESTION:** %s
+            **NUTZERFRAGE:** %s
 
-            **YOUR RESPONSE:**
+            **DEINE ANTWORT:**
             """, context, question);
     }
 
