@@ -7,7 +7,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.ai.document.Document;
 import org.springframework.ai.vectorstore.SearchRequest;
-import org.springframework.ai.vectorstore.VectorStore;
+import de.deltatree.tools.rag.vectorstore.PostgresVectorStore;
 import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.*;
 
@@ -18,10 +18,10 @@ import java.util.stream.Collectors;
 @RequestMapping("/chat")
 public class ChatController {
     private static final Logger LOG = LoggerFactory.getLogger(ChatController.class);
-    private final VectorStore vectorStore;
+    private final PostgresVectorStore vectorStore;
     private final OllamaService ollamaService;
 
-    public ChatController(VectorStore vectorStore, OllamaService ollamaService) {
+    public ChatController(PostgresVectorStore vectorStore, OllamaService ollamaService) {
         this.vectorStore = vectorStore;
         this.ollamaService = ollamaService;
         LOG.info("ChatController initialized successfully");
@@ -51,6 +51,10 @@ public class ChatController {
 
         // 2. Check if we have relevant context AND if it's actually related to the question
         if (documents.isEmpty()) {
+            long count = vectorStore.getDocumentCount();
+            if (count == 0) {
+                return new Answer("My knowledge base is empty. Please upload documents before asking questions.");
+            }
             return new Answer("I don't have information about that topic in my knowledge base. Please try rephrasing your question or check if relevant documents have been uploaded.");
         }
 
