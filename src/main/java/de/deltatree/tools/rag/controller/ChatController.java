@@ -11,7 +11,7 @@ import org.springframework.ai.vectorstore.VectorStore;
 import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.*;
 
-import java.util.List;
+import java.util.*;
 import java.util.stream.Collectors;
 
 @RestController
@@ -37,14 +37,17 @@ public class ChatController {
         }
 
         // 1. Retrieve relevant documents
-        List<Document> documents = vectorStore.similaritySearch(
+        List<Document> retrievedDocs = vectorStore.similaritySearch(
                 SearchRequest.query(question.getQuestion())
-                        .withTopK(8)// Get more documents for better context
+                        .withTopK(20) // fetch more in case of duplicates
                         .withSimilarityThreshold(0.38)
 
         );
 
-        LOG.info("Retrieved {} documents from vector store", documents.size());
+        LOG.info("Retrieved {} documents from vector store", retrievedDocs.size());
+
+        // Remove duplicate chunks and limit to top 8
+        List<Document> documents = deduplicateDocuments(retrievedDocs, 8);
 
         // 2. Check if we have relevant context AND if it's actually related to the question
         if (documents.isEmpty()) {
@@ -200,6 +203,21 @@ public class ChatController {
         }
 
         return response;
+    }
+
+    private List<Document> deduplicateDocuments(List<Document> docs, int max) {
+        Set<String> seen = new HashSet<>();
+        List<Document> unique = new ArrayList<>();
+        for (Document doc : docs) {
+            if (seen.add(doc.getContent())) {
+                unique.add(doc);
+                if (unique.size() >= max) {
+                    break;
+                }
+            }
+        }
+        LOG.info("After deduplication {} documents remain", unique.size());
+        return unique;
     }
 }
 
