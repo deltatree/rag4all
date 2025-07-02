@@ -8,6 +8,7 @@ import org.slf4j.LoggerFactory;
 import org.springframework.ai.document.Document;
 import org.springframework.ai.vectorstore.SearchRequest;
 import de.deltatree.tools.rag.vectorstore.PostgresVectorStore;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.*;
 
@@ -20,10 +21,14 @@ public class ChatController {
     private static final Logger LOG = LoggerFactory.getLogger(ChatController.class);
     private final PostgresVectorStore vectorStore;
     private final OllamaService ollamaService;
+    private final double similarityThreshold;
 
-    public ChatController(PostgresVectorStore vectorStore, OllamaService ollamaService) {
+    public ChatController(PostgresVectorStore vectorStore,
+                          OllamaService ollamaService,
+                          @Value("${rag.vectorstore.similarity-threshold:0.3}") double similarityThreshold) {
         this.vectorStore = vectorStore;
         this.ollamaService = ollamaService;
+        this.similarityThreshold = similarityThreshold;
         LOG.info("ChatController initialized successfully");
     }
 
@@ -40,7 +45,7 @@ public class ChatController {
         List<Document> retrievedDocs = vectorStore.similaritySearch(
                 SearchRequest.query(question.getQuestion())
                         .withTopK(20) // fetch more in case of duplicates
-                        .withSimilarityThreshold(0.38)
+                        .withSimilarityThreshold(similarityThreshold)
 
         );
 
